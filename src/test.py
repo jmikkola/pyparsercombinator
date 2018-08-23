@@ -38,8 +38,8 @@ class TextTest(unittest.TestCase):
             parse(st, parser)
 
     def test_parse_lambda(self):
-        self.assertEqual('', parse(StringText('abc'), LambdaParser()))
-        self.assertEqual('', parse(StringText(''), LambdaParser()))
+        self.assertEqual(None, parse(StringText('abc'), LambdaParser()))
+        self.assertEqual(None, parse(StringText(''), LambdaParser()))
 
     def test_parse_eof(self):
         self.assertEqual('', parse(StringText(''), EndParser()))
@@ -58,6 +58,36 @@ class TextTest(unittest.TestCase):
         parser = Sequence([p, p])
         result = parse(st, parser)
         self.assertEqual(['a', 'b'], result)
+
+    def test_parse_predicate(self):
+        st = StringText('abc')
+        self.assertEqual('a', parse(st, Predicate(str.isalpha)))
+        with self.assertRaises(NoMatch):
+            parse(st, Predicate(str.isdigit))
+
+    def test_parse_string(self):
+        st = StringText('asdf123')
+        p = String('asdf')
+        self.assertEqual('asdf', parse(st, p))
+
+    def test_optional(self):
+        p = Optional(Predicate(str.isdigit))
+        self.assertEqual('1', parse(StringText('123'), p))
+        self.assertEqual(None, parse(StringText('asdf'), p))
+        self.assertEqual(None, parse(StringText(''), p))
+
+    def test_many(self):
+        p = Many(Predicate(str.isdigit))
+        self.assertEqual(['1', '2', '3'], parse(StringText('123xyz'), p))
+        self.assertEqual([], parse(StringText('asdf'), p))
+        self.assertEqual([], parse(StringText(''), p))
+
+    def test_many1(self):
+        p = Many1(Predicate(str.isdigit))
+        self.assertEqual(['1', '2', '3'], parse(StringText('123xyz'), p))
+        self.assertEqual(['1'], parse(StringText('1asdf'), p))
+        with self.assertRaises(NoMatch):
+            parse(StringText('asdf'), p)
 
 
 if __name__ == '__main__':

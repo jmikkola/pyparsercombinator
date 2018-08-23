@@ -74,6 +74,17 @@ class Char(Parser):
         return ch, cursor
 
 
+class Predicate(Parser):
+    def __init__(self, pred):
+        self._pred = pred
+
+    def recognize(self, text, cursor):
+        ch, cursor = text.read_at_cursor(cursor)
+        if not self._pred(ch):
+            raise NoMatch()
+        return ch, cursor
+
+
 class EndParser(Parser):
     def recognize(self, text, cursor):
         try:
@@ -85,7 +96,7 @@ class EndParser(Parser):
 
 class LambdaParser(Parser):
     def recognize(self, text, cursor):
-        return '', cursor
+        return None, cursor
 
 
 '''
@@ -122,7 +133,63 @@ class Alternative(Parser):
                 return p.recognize(text, cursor)
             except NoMatch:
                 pass
+            except EndOfText:
+                pass
         raise NoMatch()
+
+
+class Apply(Parser):
+    def __init__(self, parser, fn):
+        assert(isinstance(parser, Parser))
+        self._parser = parser
+        self._fn = fn
+
+    def recognize(self, text, cursor):
+        result, cur = self._parser.recognize(text, cursor)
+        return self._fn(result), cur
+
+
+class Many(Parser):
+    ''' zero or more copies '''
+    def __init__(self, parser):
+        assert(isinstance(parser, Parser))
+        self._parser = parser
+
+    def recognize(self, text, cursor):
+        results = []
+        cur = cursor
+        while True:
+            try:
+                result, cur = self._parser.recognize(text, cur)
+                results.append(result)
+            except NoMatch:
+                break
+            except EndOfText:
+                break
+        return results, cur
+
+
+'''
+Useful constructions of combinators
+'''
+
+
+def String(s):
+    assert(isinstance(s, str))
+    sParser = Sequence([Char(c) for c in s])
+    return Apply(sParser, lambda lst: ''.join(lst))
+
+
+def Optional(p):
+    assert(isinstance(p, Parser))
+    return Alternative([p, LambdaParser()])
+
+
+def Many1(p):
+    assert(isinstance(p, Parser))
+    seq = Sequence([p, Many(p)])
+    return Apply(seq, lambda lst: [lst[0]] + lst[1])
+
 
 
 def parse(text, parser):
