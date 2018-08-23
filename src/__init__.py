@@ -90,6 +90,25 @@ class Predicate(Parser):
         return ch, cursor
 
 
+class Range(Parser):
+    ''' Parses any character in the range min_ch to max_ch, inclusive '''
+    def __init__(self, min_ch, max_ch):
+        assert(isinstance(min_ch, str))
+        assert(len(min_ch) == 1)
+        assert(isinstance(max_ch, str))
+        assert(len(max_ch) == 1)
+        assert(min_ch <= max_ch)
+
+        self._min = min_ch
+        self._max = max_ch
+
+    def recognize(self, text, cursor):
+        ch, cursor = text.read_at_cursor(cursor)
+        if not (self._min <= ch <= self._max):
+            raise NoMatch()
+        return ch, cursor
+
+
 class EndParser(Parser):
     def recognize(self, text, cursor):
         try:
@@ -199,7 +218,49 @@ def Many1(p):
     return Apply(seq, lambda lst: [lst[0]] + lst[1])
 
 
+def SepBy1(p, sep):
+    ''' Parses multiple of p, separated by sep '''
+    assert(isinstance(p, Parser))
+    assert(isinstance(sep, Parser))
+    after_first = Many(Sequence([sep, p]))
+    with_first = Sequence([p, after_first])
+
+    def fix_list(lst):
+        return [lst[0]] + _flatten(lst[1])
+
+    return Apply(with_first, fix_list)
+
+
+def Join(p):
+    ''' Joins a list of string results returned by p back
+    into a single string '''
+    assert(isinstance(p, Parser))
+    return Apply(p, lambda lst: ''.join(lst))
+
+
+def Digit():
+    ''' Parses a single digit '''
+    return Predicate(str.isdigit)
+
+
+def Digits():
+    ''' Parses one or more digits, returns a string '''
+    return Join(Many1(Digit()))
+
+
+def Letter():
+    ''' Parses a single letter [a-zA-Z] '''
+    return Alternative([Range('a', 'z'), Range('A', 'Z')])
+
+
+def Letters():
+    ''' Parses one or more letters, returns a string '''
+    return Join(Many1(Letter()))
+
+
 def parse(text, parser):
+    ''' Takes an instance of AbstractText
+    and a parser and returns the parser's result '''
     assert(isinstance(text, AbstractText))
     assert(isinstance(parser, Parser))
 
@@ -209,5 +270,14 @@ def parse(text, parser):
 
 
 def parse_string(s, parser):
+    ''' Takes a string and a parser and returns the parser's result '''
     assert(isinstance(s, str))
     return parse(StringText(s), parser)
+
+
+def _flatten(lst):
+    ''' converts [[a, b], [c, d]] to [a, b, c, d] '''
+    result = []
+    for item in lst:
+        result.extend(item)
+    return result

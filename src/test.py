@@ -1,14 +1,18 @@
 from . import (
     Alternative,
     Char,
+    Digits,
     EndOfText,
     EndParser,
+    Join,
     LambdaParser,
+    Letters,
     Many,
     Many1,
     NoMatch,
     Optional,
     Predicate,
+    SepBy1,
     Sequence,
     String,
     StringText,
@@ -105,6 +109,30 @@ class TextTest(unittest.TestCase):
         self.assertEqual(['1'], parse(StringText('1asdf'), p))
         with self.assertRaises(NoMatch):
             parse(StringText('asdf'), p)
+
+    def test_sepby1(self):
+        num = Join(Many1(Predicate(str.isdigit)))
+        sep = Join(Sequence([Char(','), Join(Many(Char(' ')))]))
+        p = SepBy1(num, sep)
+        expected = ['1', ', ', '2', ',', '3', ',  ', '4']
+        self.assertEqual(expected, parse_string('1, 2,3,  4', p))
+        self.assertEqual(['1'], parse_string('1', p))
+        self.assertEqual(['1'], parse_string('1,', p))
+        with self.assertRaises(NoMatch):
+            parse_string(',1', p)
+            parse_string('', p)
+
+    def test_digits(self):
+        self.assertEqual('123', parse_string('123asdf456', Digits()))
+        self.assertEqual('1', parse_string('1', Digits()))
+        with self.assertRaises(NoMatch):
+            parse_string('x', Digits())
+
+    def test_letters(self):
+        self.assertEqual('xyz', parse_string('xyz123asdf', Letters()))
+        self.assertEqual('x', parse_string('x', Letters()))
+        with self.assertRaises(NoMatch):
+            parse_string('1', Letters())
 
 
 if __name__ == '__main__':
