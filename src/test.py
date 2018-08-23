@@ -72,9 +72,9 @@ class TextTest(unittest.TestCase):
 
     def test_optional(self):
         p = Optional(Predicate(str.isdigit))
-        self.assertEqual('1', parse(StringText('123'), p))
-        self.assertEqual(None, parse(StringText('asdf'), p))
-        self.assertEqual(None, parse(StringText(''), p))
+        self.assertEqual('1', parse_string('123', p))
+        self.assertEqual(None, parse_string('asdf', p))
+        self.assertEqual(None, parse_string('', p))
 
     def test_many(self):
         p = Many(Predicate(str.isdigit))

@@ -199,3 +199,7 @@ def parse(text, parser):
     cursor = text.get_start_cursor()
     (result, _) =  parser.recognize(text, cursor)
     return result
+
+def parse_string(s, parser):
+    assert(isinstance(s, str))
+    return parse(StringText(s), parser)
