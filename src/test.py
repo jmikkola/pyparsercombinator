@@ -16,6 +16,8 @@ from . import (
     Sequence,
     String,
     StringText,
+    Whitespaces,
+    Whitespaces1,
     parse,
     parse_string,
 )
@@ -133,6 +135,15 @@ class TextTest(unittest.TestCase):
         self.assertEqual('x', parse_string('x', Letters()))
         with self.assertRaises(NoMatch):
             parse_string('1', Letters())
+
+    def test_whitespaces1(self):
+        self.assertEqual(' \t\n', parse_string(' \t\nfoo', Whitespaces1()))
+        with self.assertRaises(NoMatch):
+            parse_string('foo', Whitespaces1())
+
+    def test_whitespaces(self):
+        self.assertEqual(' \t\n', parse_string(' \t\nfoo', Whitespaces()))
+        self.assertEqual('', parse_string('foo', Whitespaces()))
 
 
 if __name__ == '__main__':

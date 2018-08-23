@@ -231,6 +231,12 @@ def SepBy1(p, sep):
     return Apply(with_first, fix_list)
 
 
+def OneOf(chars):
+    ''' Parses any of of the characters in chars '''
+    ps = [Char(c) for c in chars]
+    return Alternative(ps)
+
+
 def Join(p):
     ''' Joins a list of string results returned by p back
     into a single string '''
@@ -256,6 +262,21 @@ def Letter():
 def Letters():
     ''' Parses one or more letters, returns a string '''
     return Join(Many1(Letter()))
+
+
+def Whitespace():
+    ''' Parses a single whitespace characer, including newlines '''
+    return OneOf([' ', '\t', '\n', '\r'])
+
+
+def Whitespaces1():
+    ''' Parses one or more whitespace characters '''
+    return Join(Many1(Whitespace()))
+
+
+def Whitespaces():
+    ''' Parses zero or more whitespace characters '''
+    return Join(Many(Whitespace()))
 
 
 def parse(text, parser):
