@@ -1,4 +1,4 @@
-from . import EndOfText, NoMatch, StringText, Char, parse
+from . import *
 
 import unittest
 
@@ -36,6 +36,28 @@ class TextTest(unittest.TestCase):
         parser = Char('a')
         with self.assertRaises(EndOfText):
             parse(st, parser)
+
+    def test_parse_lambda(self):
+        self.assertEqual('', parse(StringText('abc'), LambdaParser()))
+        self.assertEqual('', parse(StringText(''), LambdaParser()))
+
+    def test_parse_eof(self):
+        self.assertEqual('', parse(StringText(''), EndParser()))
+        with self.assertRaises(NoMatch):
+            parse(StringText('asdf'), EndParser())
+
+    def test_parse_sequence(self):
+        st = StringText('abc')
+        parser = Sequence([Char('a'), Char('b'), Char('c')])
+        result = parse(st, parser)
+        self.assertEqual(['a', 'b', 'c'], result)
+
+    def test_parse_alternative(self):
+        st = StringText('abc')
+        p = Alternative([Char('a'), Char('b'), Char('c')])
+        parser = Sequence([p, p])
+        result = parse(st, parser)
+        self.assertEqual(['a', 'b'], result)
 
 
 if __name__ == '__main__':

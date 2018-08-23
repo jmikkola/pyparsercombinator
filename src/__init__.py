@@ -57,6 +57,9 @@ class Parser:
         '''
         raise NotImplementedError()
 
+'''
+Fundamental parsers
+'''
 
 class Char(Parser):
     def __init__(self, ch):
@@ -69,6 +72,57 @@ class Char(Parser):
         if ch != self._ch:
             raise NoMatch()
         return ch, cursor
+
+
+class EndParser(Parser):
+    def recognize(self, text, cursor):
+        try:
+            text.read_at_cursor(cursor)
+        except EndOfText:
+            return ('', None)
+        raise NoMatch
+
+
+class LambdaParser(Parser):
+    def recognize(self, text, cursor):
+        return '', cursor
+
+
+'''
+Primitive combinators
+'''
+
+
+class Sequence(Parser):
+    def __init__(self, parsers):
+        assert(isinstance(parsers, list))
+        for p in parsers:
+            assert(isinstance(p, Parser))
+        self._parsers = parsers
+
+    def recognize(self, text, cursor):
+        results = []
+        cur = cursor
+        for p in self._parsers:
+            result, cur = p.recognize(text, cur)
+            results.append(result)
+        return results, cur
+
+
+class Alternative(Parser):
+    def __init__(self, parsers):
+        assert(isinstance(parsers, list))
+        for p in parsers:
+            assert(isinstance(p, Parser))
+        self._parsers = parsers
+
+    def recognize(self, text, cursor):
+        for p in self._parsers:
+            try:
+                return p.recognize(text, cursor)
+            except NoMatch:
+                pass
+        raise NoMatch()
 
 
 def parse(text, parser):
