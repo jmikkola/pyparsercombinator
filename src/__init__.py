@@ -12,7 +12,10 @@ class NoMatch(ParseError):
 
 
 class AbstractText:
+    ''' The base class of text inputs '''
     def get_start_cursor(self):
+        ''' Returns a cursor that, when passed to read_at_cursor,
+        will give the first character '''
         raise NotImplementedError()
 
     def read_at_cursor(self, cursor):
@@ -57,9 +60,11 @@ class Parser:
         '''
         raise NotImplementedError()
 
+
 '''
 Fundamental parsers
 '''
+
 
 class Char(Parser):
     def __init__(self, ch):
@@ -175,21 +180,23 @@ Useful constructions of combinators
 
 
 def String(s):
+    ''' Parses the string s '''
     assert(isinstance(s, str))
     sParser = Sequence([Char(c) for c in s])
     return Apply(sParser, lambda lst: ''.join(lst))
 
 
 def Optional(p):
+    ''' Parses zero or one instance of p '''
     assert(isinstance(p, Parser))
     return Alternative([p, LambdaParser()])
 
 
 def Many1(p):
+    ''' Parses one or more instance of p '''
     assert(isinstance(p, Parser))
     seq = Sequence([p, Many(p)])
     return Apply(seq, lambda lst: [lst[0]] + lst[1])
-
 
 
 def parse(text, parser):
@@ -197,8 +204,9 @@ def parse(text, parser):
     assert(isinstance(parser, Parser))
 
     cursor = text.get_start_cursor()
-    (result, _) =  parser.recognize(text, cursor)
+    (result, _) = parser.recognize(text, cursor)
     return result
+
 
 def parse_string(s, parser):
     assert(isinstance(s, str))
